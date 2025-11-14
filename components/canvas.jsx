@@ -124,22 +124,55 @@ export default function Canvas() {
   return (
     <div style={{ textAlign: "center" }}>
       
-      <h1
-        style={{
-          margin: "20px auto 10px",
-          padding: "22px 40px",
-          borderRadius: "50%",
-          border: "4px dashed #8a5",
-          background: "rgba(255,255,230,0.6)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-          display: "inline-block",
-          fontFamily: "'Comic Neue', cursive",
-          fontSize: "30px",
-          fontWeight: "700",
-        }}
-      >
-        Our Reading World!
-      </h1>
+     {/* Header + Instructions */}
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "30px",
+    padding: "0 40px",
+  }}
+>
+  {/* Title */}
+  <h1
+    style={{
+      display: "inline-block",
+      padding: "12px 40px",
+      fontFamily: "sans-serif",
+      fontSize: "36px",
+      borderRadius: "999px",
+      border: "3px dashed #9CC69B",
+      background: "#f7fdf7",
+    }}
+  >
+    Our Reading World!
+  </h1>
+
+  {/* Instructions */}
+  <div
+    style={{
+      fontSize: "14px",
+      marginTop: "1rem",
+      maxWidth: "260px",
+      lineHeight: "1.4",
+      textAlign: "right",
+      padding: "1rem",
+      borderRadius: "12px",
+      background: "#f9f9f9",
+      border: "1px dashed #ddd",
+      boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+      fontFamily: "sans-serif",
+    }}
+  >
+    <strong>How it works:</strong>
+    <br />
+    Log a book you’ve read →
+    earn and choose your sticker →
+    place it anywhere in our town!
+  </div>
+</div>
+
 
       {!formSubmitted && (
         <form onSubmit={handleBookSubmit} style={{ marginBottom: "40px" }}>
