@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { db } from "../../../lib/db";
 import { stickers } from "../../../lib/schema";
 import { eq } from "drizzle-orm";
