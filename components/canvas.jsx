@@ -122,9 +122,27 @@ export default function Canvas() {
   };
 
   return (
-    <div>
+    <div style={{ textAlign: "center" }}>
+      
+      <h1
+        style={{
+          margin: "20px auto 10px",
+          padding: "22px 40px",
+          borderRadius: "50%",
+          border: "4px dashed #8a5",
+          background: "rgba(255,255,230,0.6)",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+          display: "inline-block",
+          fontFamily: "'Comic Neue', cursive",
+          fontSize: "30px",
+          fontWeight: "700",
+        }}
+      >
+        Our Reading World!
+      </h1>
+
       {!formSubmitted && (
-        <form onSubmit={handleBookSubmit} style={{ marginBottom: "20px" }}>
+        <form onSubmit={handleBookSubmit} style={{ padding: "40px" }}>
           <input
             type="text"
             placeholder="Book Title"
@@ -136,7 +154,7 @@ export default function Canvas() {
             type="text"
             placeholder="Author"
             value={bookInfo.author}
-            onChange={(e) => setBookInfo({ ...bookInfo, author: e.target.value })}
+            onChange={(e) => setBookInfo({ ...bookInfo, asuthor: e.target.value })}
             required
           />
           <input
@@ -152,7 +170,9 @@ export default function Canvas() {
             onChange={(e) => setBookInfo({ ...bookInfo, date: e.target.value })}
             required
           />
-          <div style={{ marginTop: "10px" }}>
+          <div style={{ 
+            marginTop: "10px", 
+            fontFamily: "sans-serif", }}>
             <label>Select a sticker: </label>
             <select
               value={selectedSticker}
