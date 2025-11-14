@@ -142,7 +142,7 @@ export default function Canvas() {
       </h1>
 
       {!formSubmitted && (
-        <form onSubmit={handleBookSubmit} style={{ padding: "40px" }}>
+        <form onSubmit={handleBookSubmit} style={{ marginBottom: "40px" }}>
           <input
             type="text"
             placeholder="Book Title"
@@ -154,7 +154,7 @@ export default function Canvas() {
             type="text"
             placeholder="Author"
             value={bookInfo.author}
-            onChange={(e) => setBookInfo({ ...bookInfo, asuthor: e.target.value })}
+            onChange={(e) => setBookInfo({ ...bookInfo, author: e.target.value })}
             required
           />
           <input
