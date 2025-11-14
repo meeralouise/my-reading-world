@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Sticker from "./Sticker";
+import Sticker from "./sticker";
 
 import { STICKER_LIBRARY } from "../lib/stickerLibrary.js";
 
