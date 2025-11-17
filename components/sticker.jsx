@@ -158,13 +158,13 @@ export default function Sticker({ sticker, onDragEnd, onScaleChange }) {
             {sticker.reader_name && (
               <>
                 <br />
-                👤 {sticker.reader_name}
+                {sticker.reader_name}
               </>
             )}
             {sticker.date_read && (
               <>
                 <br />
-                📅 {sticker.date_read}
+                {sticker.date_read}
               </>
             )}
           </div>
