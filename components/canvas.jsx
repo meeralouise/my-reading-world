@@ -3,6 +3,8 @@ import Sticker from "./sticker";
 import { STICKER_LIBRARY } from "../lib/stickerLibrary.js";
 
 export default function Canvas() {
+  const [hoverSubmit, setHoverSubmit] = useState(false);
+const [hoverExport, setHoverExport] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [stickers, setStickers] = useState([]);
   const [bookInfo, setBookInfo] = useState({
@@ -30,7 +32,7 @@ export default function Canvas() {
         const data = await res.json();
 
         if (Array.isArray(data)) {
-          console.log("📥 Stickers loaded from DB:", data);
+          console.log("Stickers loaded from DB:", data);
           setStickers(data);
         }
       } catch (err) {
@@ -45,7 +47,7 @@ export default function Canvas() {
 
   // Dragging interaction + persistence
   const handleDragEnd = async (id, x, y) => {
-    console.log("🟢 Drag ended:", id, x, y);
+    console.log(" Drag ended:", id, x, y);
 
     setStickers((prev) =>
       prev.map((s) =>
@@ -113,30 +115,93 @@ export default function Canvas() {
       setStickers((prev) => [...prev, saved]);
       setFormSubmitted(true);
     } catch (err) {
-      console.error("❌ Error saving sticker:", err);
+      console.error(" Error saving sticker:", err);
     }
   };
 
-  // EXPORT CANVAS TO PDF
   const handleExportPDF = async () => {
     const html2canvas = (await import("html2canvas")).default;
     const { jsPDF } = await import("jspdf");
-
+  
     const element = document.getElementById("art-canvas");
     if (!element) return alert("Canvas not found!");
-
-    const canvas = await html2canvas(element, { scale: 2 });
+  
+    const canvas = await html2canvas(element, { scale: 3 });
     const img = canvas.toDataURL("image/png");
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-
+  
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "pt",
+      format: "letter",
+    });
+  
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+  
+    // ⭐️ Remove top margin entirely
+    const margin = 10;
+  
+    // ⭐️ You may shrink this later for more space
+    const titleHeight = 60;
+  
+    // Available space for image AFTER the title
+    const availWidth = pageWidth - margin * 2;
+    const availHeight = pageHeight - titleHeight - margin;
+  
+    // Safety buffer to ensure bottom never clips
+    const safeHeight = availHeight * 0.94;
+  
     const imgProps = pdf.getImageProperties(img);
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    pdf.addImage(img, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save("my-reading-world.pdf");
+    const imgRatio = imgProps.width / imgProps.height;
+    const boxRatio = availWidth / safeHeight;
+  
+    let renderWidth, renderHeight;
+  
+    if (imgRatio > boxRatio) {
+      renderWidth = availWidth;
+      renderHeight = renderWidth / imgRatio;
+    } else {
+      renderHeight = safeHeight;
+      renderWidth = renderHeight * imgRatio;
+    }
+  
+    // Y-position: directly below title (no top margin)
+    const x = margin + (availWidth - renderWidth) / 2;
+    const y = titleHeight + (availHeight - renderHeight) / 2;
+  
+    // ⭐️ Title flush at the top
+    pdf.setFont("Helvetica", "bold");
+    pdf.setFontSize(36);
+    pdf.text("Our Reading World", pageWidth / 2, 40, {
+      align: "center",
+    });
+  
+    // Frame
+    pdf.setDrawColor(160, 200, 160);
+    pdf.setLineWidth(2);
+    pdf.rect(
+      x - 10,
+      y - 10,
+      renderWidth + 20,
+      renderHeight + 20,
+      "S"
+    );
+  
+    pdf.addImage(img, "PNG", x, y, renderWidth, renderHeight);
+  
+    pdf.save("my-reading-world-poster.pdf");
   };
+  
+  const baseButtonStyle = {
+    padding: "10px 20px",
+    borderRadius: "12px",
+    border: "2px dashed #9CC69B",
+    fontFamily: "sans-serif",
+    cursor: "pointer",
+    transition: ".25s ease",
+    fontSize: "14px",
+  };
+  
 
 /*STYLES*/
 return (
@@ -236,13 +301,43 @@ style={{
 ))}
           </select>
         </div>
-        <button type="submit" style={{ marginTop: "10px" }}>
-          Submit & Earn Sticker
-        </button>
+        <button
+  type="submit"
+  onMouseEnter={() => setHoverSubmit(true)}
+  onMouseLeave={() => setHoverSubmit(false)}
+  style={{
+    ...baseButtonStyle,
+    marginTop: "10px",
+    background: hoverSubmit ? "#e3f8e3" : "#f7fff7",
+    // transform: hoverSubmit ? "translateY(-3px)" : "translateY(0)",
+  }}
+>
+  Submit & Earn Sticker
+</button>
       </form>
     )}
 
+<button
+  onClick={handleExportPDF}
+  onMouseEnter={() => setHoverExport(true)}
+  onMouseLeave={() => setHoverExport(false)}
+  style={{
+    ...baseButtonStyle,
+    marginBottom: "20px",
+    marginLeft: "10px",
+    display:"block",
+    textAlign: "left",
+    fontSize: "10px",
+    padding: "8px 12px",
+    background: hoverExport ? "#d9ffe9" : "#f7fff7",
+    // transform: hoverExport ? "translateY(-2px)" : "translateY(0)",
+  }}
+>
+  Export Canvas as PDF
+</button>
+
     <div
+    id="art-canvas"
       style={{
         width: "2000px",
         height: "2000px",
