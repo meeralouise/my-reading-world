@@ -2,6 +2,13 @@ import { useState, useEffect } from "react";
 import Sticker from "./sticker";
 import { STICKER_LIBRARY } from "../lib/stickerLibrary.js";
 
+import localFont from "next/font/local";
+
+const organical = localFont({
+  src: "../fonts/organical-personal-use.ttf",
+});
+
+
 export default function Canvas() {
   const [hoverSubmit, setHoverSubmit] = useState(false);
   const [hoverExport, setHoverExport] = useState(false);
@@ -154,18 +161,20 @@ export default function Canvas() {
         }}
       >
         <h1
-          style={{
-            display: "inline-block",
-            padding: "12px 40px",
-            fontFamily: "sans-serif",
-            fontSize: "36px",
-            borderRadius: "999px",
-            border: "3px dashed #9CC69B",
-            background: "#f7fdf7",
-          }}
-        >
-          Our Reading World!
-        </h1>
+  className={organical.className}
+  style={{
+    display: "inline-block",
+    padding: "12px 40px",
+    fontSize: "50px",
+    borderRadius: "999px",
+    border: "3px dashed #9CC69B",
+    background: "#f7fdf7",
+    color: "#421C0B",
+  }}
+>
+  Our Reading World!
+</h1>
+
   
         <div
           style={{
@@ -233,7 +242,7 @@ export default function Canvas() {
         </form>
       )}
   
-      {/* ⭐ EMOJI-STYLE POPUP PICKER */}
+      {/*  EMOJI-STYLE POPUP PICKER */}
       {showStickerPicker && (
         <div
           onClick={() => setShowStickerPicker(false)}
@@ -255,17 +264,17 @@ export default function Canvas() {
             style={{
               background: "white",
               padding: "20px",
-              borderRadius: "14px",
+              borderRadius: "7px",
               border: "2px solid #9CC69B",
               boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
               width: "420px",
               maxHeight: "60vh",
               overflowY: "scroll",
-              animation: "popIn 0.2s ease-out",
+              
             }}
           >
             <h3 style={{ textAlign: "left", fontFamily: "sans-serif" }}>
-              Pick a Sticker
+              pick a sticker!
             </h3>
   
             <div
@@ -393,9 +402,7 @@ export default function Canvas() {
           border: "1px solid #ccc",
           position: "relative",
           overflow: "hidden",
-          backgroundImage: 'url("/stickers/background.jpg")',
-          backgroundRepeat: "repeat",
-          backgroundSize: "20%",
+          background: "#f7fdf7",
         }}
       >
         {stickers.map((s) => (
