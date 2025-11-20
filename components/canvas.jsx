@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Sticker from "./sticker";
+// import Vine from "./Vine";
 import { STICKER_LIBRARY } from "../lib/stickerLibrary.js";
 
 import localFont from "next/font/local";
@@ -168,14 +169,16 @@ export default function Canvas() {
     fontSize: "50px",
     borderRadius: "999px",
     border: "3px dashed #9CC69B",
-    background: "#f7fdf7",
+    backgroundImage: 'url("/stickers/background2.jpg")',
     color: "#421C0B",
+    WebkitTextStroke: ".25px white",   // stroke width + color
   }}
 >
   Our Reading World!
 </h1>
 
-  
+{/* VINE
+<Vine style={{ top: "120px", left: "100px" }} /> */}
         <div
           style={{
             fontSize: "14px",
@@ -197,7 +200,12 @@ export default function Canvas() {
           place it anywhere in our town!
         </div>
       </div>
-  
+
+
+  {/* VINE
+<Vine style={{ top: "200px", left: "400px" }} /> */}
+
+
       {/* Book Form */}
       {!formSubmitted && (
         <form style={{ marginBottom: "10px" }}>
