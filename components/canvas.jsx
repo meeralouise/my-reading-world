@@ -168,10 +168,10 @@ export default function Canvas() {
     padding: "12px 40px",
     fontSize: "50px",
     borderRadius: "999px",
-    border: "3px dashed #9CC69B",
+    border: "3px dashed #f7fff7",
     backgroundImage: 'url("/stickers/background2.jpg")',
     color: "#421C0B",
-    WebkitTextStroke: ".25px white",   // stroke width + color
+    WebkitTextStroke: ".25px white",  
   }}
 >
   Our Reading World!
