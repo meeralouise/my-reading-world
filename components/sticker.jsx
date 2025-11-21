@@ -100,7 +100,14 @@ export default function Sticker({ sticker, onDragEnd, onScaleChange }) {
           <img
             src={sticker.image_url || sticker.imageUrl}
             alt="sticker"
-            style={{ width: 100, height: 100, pointerEvents: "none" }}
+           style={{
+  width: "auto",
+  height: "auto",
+  maxWidth: "180px",
+  maxHeight: "180px",
+  objectFit: "contain",
+  pointerEvents: "none",
+}}
           />
   
           {/* Scale + Lock Controls */}
