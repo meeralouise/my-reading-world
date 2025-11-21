@@ -306,17 +306,16 @@ export default function Canvas() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "white",
+              background: "#2e4e1d",
               padding: "20px",
               borderRadius: "7px",
               border: "2px solid #9CC69B",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
               width: "420px",
               maxHeight: "60vh",
               overflowY: "scroll",
             }}
           >
-            <h3 style={{ textAlign: "center", fontFamily: "sans-serif" }}>
+            <h3 style={{ textAlign: "center", fontFamily: "sans-serif", color: "white", }}>
               pick a sticker!
             </h3>
 
@@ -357,6 +356,11 @@ export default function Canvas() {
           objectFit: "contain",
           pointerEvents: "none",
           display: "block",
+          filter: `
+    drop-shadow(0 0 2px white)
+    drop-shadow(0 0 1px #9CC69B)
+    drop-shadow(0 0 1px white)
+  `,
         }}
       />
     </div>
