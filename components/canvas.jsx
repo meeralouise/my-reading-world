@@ -26,10 +26,15 @@ export default function Canvas() {
     STICKER_LIBRARY[0]?.url || ""
   );
 
- 
+  // Form completion checker
+  const formCompleted =
+    bookInfo.title &&
+    bookInfo.author &&
+    bookInfo.name &&
+    bookInfo.date;
+
   useEffect(() => setIsClient(true), []);
 
- 
   useEffect(() => {
     if (!isClient) return;
 
@@ -52,7 +57,9 @@ export default function Canvas() {
 
   const handleDragEnd = async (id, x, y) => {
     setStickers((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, x_position: x, y_position: y } : s))
+      prev.map((s) =>
+        s.id === id ? { ...s, x_position: x, y_position: y } : s
+      )
     );
 
     try {
@@ -65,7 +72,9 @@ export default function Canvas() {
   };
 
   const handleScaleChange = async (id, scale) => {
-    setStickers((prev) => prev.map((s) => (s.id === id ? { ...s, scale } : s)));
+    setStickers((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, scale } : s))
+    );
 
     try {
       await fetch(`/api/stickers/${id}`, {
@@ -79,19 +88,26 @@ export default function Canvas() {
   /* ---------------------- Submitting a Book ----------------------- */
   const handleBookSubmit = async (e) => {
     e.preventDefault();
-
-    const { title, author, name, date } = bookInfo;
-
+  
+    if (!formCompleted) {
+      alert("Please complete the entire form before submitting.");
+      return;
+    }
+  
+    if (!selectedSticker) {
+      alert("Please choose a sticker before submitting.");
+      return;
+    }
     const newSticker = {
       x_position: Math.floor(Math.random() * 800 + 100),
       y_position: Math.floor(Math.random() * 800 + 100),
       image_url: selectedSticker,
       scale: 1,
       locked: false,
-      title,
-      author,
-      reader_name: name,
-      date_read: date,
+      title: bookInfo.title,
+      author: bookInfo.author,
+      reader_name: bookInfo.name,
+      date_read: bookInfo.date,
     };
 
     try {
@@ -104,10 +120,11 @@ export default function Canvas() {
       const saved = await res.json();
       setStickers((prev) => [...prev, saved]);
       setFormSubmitted(true);
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
   };
-  
-    /* ---------------------- Export PDF ----------------------- */
+  /* ---------------------- Export PDF ----------------------- */
 
   const handleExportPDF = async (size = "tabloid") => {
     const html2canvas = (await import("html2canvas")).default;
@@ -182,7 +199,7 @@ export default function Canvas() {
   };
   
 
-  /* ---------------------- Base Button Style ----------------------- */
+  /* ---------------------- Base Button Style ------------------------ */
   const baseButtonStyle = {
     padding: "10px 20px",
     borderRadius: "12px",
@@ -196,7 +213,7 @@ export default function Canvas() {
   /* -------------------------- RETURN --------------------------- */
   return (
     <div style={{ textAlign: "center" }}>
-      {/* Header Row */}
+      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -214,7 +231,7 @@ export default function Canvas() {
             fontSize: "50px",
             borderRadius: "999px",
             border: "3px dashed #f7fff7",
-            backgroundImage: 'url("/stickers/background2.jpg")',
+            backgroundImage: "url('/stickers/background2.jpg')",
             color: "#421C0B",
             WebkitTextStroke: ".25px white",
           }}
@@ -238,7 +255,7 @@ export default function Canvas() {
         >
           <strong>How it works:</strong>
           <br />
-          Log a book → earn a sticker → place it anywhere in our town!
+          Log a book → choose a sticker → place it anywhere!
         </div>
       </div>
 
@@ -286,7 +303,7 @@ export default function Canvas() {
         </form>
       )}
 
-      {/* Sticker Picker */}
+      {/* Sticker Picker Modal */}
       {showStickerPicker && (
         <div
           onClick={() => setShowStickerPicker(false)}
@@ -315,7 +332,13 @@ export default function Canvas() {
               overflowY: "scroll",
             }}
           >
-            <h3 style={{ textAlign: "center", fontFamily: "sans-serif", color: "white", }}>
+            <h3
+              style={{
+                textAlign: "center",
+                fontFamily: "sans-serif",
+                color: "white",
+              }}
+            >
               pick a sticker!
             </h3>
 
@@ -328,51 +351,51 @@ export default function Canvas() {
               }}
             >
               {STICKER_LIBRARY.map((s, i) => {
-  const rotation = Math.random() * 24 - 12; 
+                const rotation = Math.random() * 24 - 12;
 
-  return (
-    <div
-      key={s.url}
-      onClick={() => {
-        setSelectedSticker(s.url);
-        setShowStickerPicker(false);
-      }}
-      style={{
-        cursor: "pointer",
-        transform: `rotate(${rotation}deg)`,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "rotate(0deg) scale(1.1)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = `rotate(${rotation}deg)`;
-      }}
-    >
-      <img
-        src={s.url}
-        style={{
-          width: "70px",
-          height: "70px",
-          objectFit: "contain",
-          pointerEvents: "none",
-          display: "block",
-          filter: `
-    drop-shadow(0 0 2px white)
-    drop-shadow(0 0 1px #9CC69B)
-    drop-shadow(0 0 1px white)
-  `,
-        }}
-      />
-    </div>
-  );
-})}
-
+                return (
+                  <div
+                    key={s.url}
+                    onClick={() => {
+                      setSelectedSticker(s.url);
+                      setShowStickerPicker(false);
+                    }}
+                    style={{
+                      cursor: "pointer",
+                      transform: `rotate(${rotation}deg)`,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform =
+                        "rotate(0deg) scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = `rotate(${rotation}deg)`;
+                    }}
+                  >
+                    <img
+                      src={s.url}
+                      style={{
+                        width: "80px",
+                        height: "70px",
+                        objectFit: "contain",
+                        pointerEvents: "none",
+                        display: "block",
+                        filter: `
+                          drop-shadow(0 0 2px white)
+                          drop-shadow(0 0 1px #9CC69B)
+                          drop-shadow(0 0 1px white)
+                        `,
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
-      {/* Sticker + Submit */}
+      {/* Sticker Picker Button + Submit */}
       {!formSubmitted && (
         <div
           style={{
@@ -384,9 +407,12 @@ export default function Canvas() {
             marginTop: "20px",
           }}
         >
+          {/* OPEN STICKER PICKER BUTTON */}
           <button
             type="button"
-            onClick={() => setShowStickerPicker(true)}
+            onClick={() => {
+              setShowStickerPicker(true);
+            }}
             style={{
               ...baseButtonStyle,
               background: "#f7fff7",
@@ -401,7 +427,11 @@ export default function Canvas() {
               <>
                 <img
                   src={selectedSticker}
-                  style={{ width: "28px", height: "28px", objectFit: "contain" }}
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    objectFit: "contain",
+                  }}
                 />
                 Select Sticker
               </>
@@ -410,6 +440,7 @@ export default function Canvas() {
             )}
           </button>
 
+          {/* SUBMIT BUTTON */}
           <button
             onClick={handleBookSubmit}
             onMouseEnter={() => setHoverSubmit(true)}
@@ -425,9 +456,8 @@ export default function Canvas() {
           </button>
         </div>
       )}
-
-    {/* Export Buttons */}
-<div
+ {/* Export Buttons */}
+ <div
   style={{
     marginBottom: "20px",
     display: "flex",
@@ -460,7 +490,6 @@ export default function Canvas() {
     Export Tabloid
   </button>
 </div>
-
       {/* Canvas */}
       <div
         id="art-canvas"
