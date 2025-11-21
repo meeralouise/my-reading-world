@@ -1,18 +1,14 @@
 import { useState, useEffect } from "react";
 import Sticker from "./sticker";
-// import Vine from "./Vine";
 import { STICKER_LIBRARY } from "../lib/stickerLibrary.js";
-
 import localFont from "next/font/local";
 
 const organical = localFont({
   src: "../fonts/organical-personal-use.ttf",
 });
 
-
 export default function Canvas() {
   const [hoverSubmit, setHoverSubmit] = useState(false);
-  const [hoverExport, setHoverExport] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [stickers, setStickers] = useState([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
@@ -30,8 +26,10 @@ export default function Canvas() {
     STICKER_LIBRARY[0]?.url || ""
   );
 
+ 
   useEffect(() => setIsClient(true), []);
 
+ 
   useEffect(() => {
     if (!isClient) return;
 
@@ -39,9 +37,7 @@ export default function Canvas() {
       try {
         const res = await fetch("/api/stickers");
         const data = await res.json();
-        if (Array.isArray(data)) {
-          setStickers(data);
-        }
+        if (Array.isArray(data)) setStickers(data);
       } catch (err) {
         console.error("Failed to fetch stickers:", err);
       }
@@ -53,6 +49,7 @@ export default function Canvas() {
   if (!isClient) return null;
 
   /* ---------------------- Dragging + Saving ----------------------- */
+
   const handleDragEnd = async (id, x, y) => {
     setStickers((prev) =>
       prev.map((s) => (s.id === id ? { ...s, x_position: x, y_position: y } : s))
@@ -109,35 +106,83 @@ export default function Canvas() {
       setFormSubmitted(true);
     } catch (err) {}
   };
+  
+    /* ---------------------- Export PDF ----------------------- */
 
-  /* -------------------------- Export PDF --------------------------- */
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (size = "tabloid") => {
     const html2canvas = (await import("html2canvas")).default;
     const { jsPDF } = await import("jspdf");
-
+  
     const element = document.getElementById("art-canvas");
     if (!element) return;
-
-    const canvas = await html2canvas(element, { scale: 3 });
+  
+    const bgColor = window.getComputedStyle(element).backgroundColor;
+  
+    const canvas = await html2canvas(element, {
+      scale: 4,
+      backgroundColor: bgColor,
+    });
+  
     const img = canvas.toDataURL("image/png");
-
+  
+    let format, filename;
+  
+    if (size === "letter") {
+      format = [792, 612];
+      filename = "my-reading-world-letter.pdf";
+    } else {
+      format = [1224, 792];
+      filename = "my-reading-world-tabloid.pdf";
+    }
+  
     const pdf = new jsPDF({
       orientation: "landscape",
       unit: "pt",
-      format: "letter",
+      format,
     });
-
+  
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const margin = 10;
-
+    const pageHeight = pdf.internal.pageSize.getHeight();
+  
+   
     pdf.setFont("Helvetica", "bold");
-    pdf.setFontSize(36);
-    pdf.text("Our Reading World", pageWidth / 2, 40, { align: "center" });
+    pdf.setFontSize(14);
+  
+    pdf.text("Our Reading World!", 40, pageHeight - 30);
+  
+  
+    const margin = 20; 
+    const maxWidth = pageWidth - margin * 2;
+    const maxHeight = pageHeight - 60;
+  
+    const origWidth = canvas.width;
+    const origHeight = canvas.height;
+  
 
-    pdf.addImage(img, "PNG", margin, 60, pageWidth - margin * 2, 520);
-    pdf.save("my-reading-world-poster.pdf");
+    let displayWidth = (origWidth * maxHeight) / origHeight;
+    let displayHeight = maxHeight;
+  
+    if (displayWidth > maxWidth) {
+      displayWidth = maxWidth;
+      displayHeight = (origHeight * maxWidth) / origWidth;
+    }
+  
+
+    const x = (pageWidth - displayWidth) / 2;
+    const y = (pageHeight - displayHeight) / 2 - 10;
+  
+ 
+    pdf.setDrawColor(200);
+    pdf.setLineWidth(1);
+    pdf.rect(x - 5, y - 5, displayWidth + 10, displayHeight + 10);
+  
+    pdf.addImage(img, "PNG", x, y, displayWidth, displayHeight);
+  
+    pdf.save(filename);
   };
+  
 
+  /* ---------------------- Base Button Style ----------------------- */
   const baseButtonStyle = {
     padding: "10px 20px",
     borderRadius: "12px",
@@ -162,23 +207,21 @@ export default function Canvas() {
         }}
       >
         <h1
-  className={organical.className}
-  style={{
-    display: "inline-block",
-    padding: "12px 40px",
-    fontSize: "50px",
-    borderRadius: "999px",
-    border: "3px dashed #f7fff7",
-    backgroundImage: 'url("/stickers/background2.jpg")',
-    color: "#421C0B",
-    WebkitTextStroke: ".25px white",  
-  }}
->
-  Our Reading World!
-</h1>
+          className={organical.className}
+          style={{
+            display: "inline-block",
+            padding: "12px 40px",
+            fontSize: "50px",
+            borderRadius: "999px",
+            border: "3px dashed #f7fff7",
+            backgroundImage: 'url("/stickers/background2.jpg")',
+            color: "#421C0B",
+            WebkitTextStroke: ".25px white",
+          }}
+        >
+          Our Reading World!
+        </h1>
 
-{/* VINE
-<Vine style={{ top: "120px", left: "100px" }} /> */}
         <div
           style={{
             fontSize: "14px",
@@ -195,16 +238,9 @@ export default function Canvas() {
         >
           <strong>How it works:</strong>
           <br />
-          Log a book you’ve read →
-          earn and choose your sticker →
-          place it anywhere in our town!
+          Log a book → earn a sticker → place it anywhere in our town!
         </div>
       </div>
-
-
-  {/* VINE
-<Vine style={{ top: "200px", left: "400px" }} /> */}
-
 
       {/* Book Form */}
       {!formSubmitted && (
@@ -218,7 +254,7 @@ export default function Canvas() {
             }
             required
           />
-  
+
           <input
             type="text"
             placeholder="Author"
@@ -228,7 +264,7 @@ export default function Canvas() {
             }
             required
           />
-  
+
           <input
             type="text"
             placeholder="Your Name"
@@ -238,7 +274,7 @@ export default function Canvas() {
             }
             required
           />
-  
+
           <input
             type="date"
             value={bookInfo.date}
@@ -249,8 +285,8 @@ export default function Canvas() {
           />
         </form>
       )}
-  
-      {/*  EMOJI-STYLE POPUP PICKER */}
+
+      {/* Sticker Picker */}
       {showStickerPicker && (
         <div
           onClick={() => setShowStickerPicker(false)}
@@ -278,13 +314,12 @@ export default function Canvas() {
               width: "420px",
               maxHeight: "60vh",
               overflowY: "scroll",
-              
             }}
           >
             <h3 style={{ textAlign: "left", fontFamily: "sans-serif" }}>
               pick a sticker!
             </h3>
-  
+
             <div
               style={{
                 display: "grid",
@@ -324,8 +359,8 @@ export default function Canvas() {
           </div>
         </div>
       )}
-  
-      {/* CENTERED CHANGE STICKER + SUBMIT STACK */}
+
+      {/* Sticker + Submit */}
       {!formSubmitted && (
         <div
           style={{
@@ -337,7 +372,6 @@ export default function Canvas() {
             marginTop: "20px",
           }}
         >
-          {/* Change Sticker */}
           <button
             type="button"
             onClick={() => setShowStickerPicker(true)}
@@ -363,8 +397,7 @@ export default function Canvas() {
               "Choose Sticker"
             )}
           </button>
-  
-          {/* Submit & Earn Sticker */}
+
           <button
             onClick={handleBookSubmit}
             onMouseEnter={() => setHoverSubmit(true)}
@@ -372,7 +405,6 @@ export default function Canvas() {
             style={{
               ...baseButtonStyle,
               background: hoverSubmit ? "#e3f8e3" : "#f7fff7",
-              padding: "12px 26px",
               fontSize: "12px",
               padding: "8px 12px",
             }}
@@ -381,31 +413,47 @@ export default function Canvas() {
           </button>
         </div>
       )}
-  
-      {/* Export Button */}
-      <button
-        onClick={handleExportPDF}
-        onMouseEnter={() => setHoverExport(true)}
-        onMouseLeave={() => setHoverExport(false)}
-        style={{
-          ...baseButtonStyle,
-          marginBottom: "20px",
-          marginLeft: "10px",
-          display: "block",
-          textAlign: "left",
-          fontSize: "10px",
-          padding: "8px 12px",
-          background: hoverExport ? "#d9ffe9" : "#f7fff7",
-        }}
-      >
-        Export Canvas as PDF
-      </button>
-  
+
+    {/* Export Buttons */}
+<div
+  style={{
+    marginBottom: "20px",
+    display: "flex",
+    gap: "5px",
+    justifyContent: "left",
+    padding: "0px 10px",
+  }}
+>
+  <button
+    style={{
+      ...baseButtonStyle,       // ← keep this
+      background: "#f7fdf7",    // ← override background
+      fontSize: "10px",         // ← override font size
+      padding: "6px 10px",      // ← optional smaller padding
+    }}
+    onClick={() => handleExportPDF("letter")}
+  >
+    Export Letter
+  </button>
+
+  <button
+    style={{
+      ...baseButtonStyle,
+      background: "#f7fdf7",
+      fontSize: "10px",
+      padding: "6px 10px",
+    }}
+    onClick={() => handleExportPDF("tabloid")}
+  >
+    Export Tabloid
+  </button>
+</div>
+
       {/* Canvas */}
       <div
         id="art-canvas"
         style={{
-          width: "2000px",
+          width: "4000px",
           height: "2000px",
           border: "1px solid #ccc",
           position: "relative",
@@ -435,5 +483,4 @@ export default function Canvas() {
       </div>
     </div>
   );
-  
 }
