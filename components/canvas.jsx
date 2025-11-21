@@ -316,45 +316,53 @@ export default function Canvas() {
               overflowY: "scroll",
             }}
           >
-            <h3 style={{ textAlign: "left", fontFamily: "sans-serif" }}>
+            <h3 style={{ textAlign: "center", fontFamily: "sans-serif" }}>
               pick a sticker!
             </h3>
 
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, 70px)",
-                gap: "12px",
+                gridTemplateColumns: "repeat(auto-fill, 60px)",
+                gap: "6px",
                 marginTop: "12px",
               }}
             >
-              {STICKER_LIBRARY.map((s) => (
-                <div
-                  key={s.url}
-                  onClick={() => {
-                    setSelectedSticker(s.url);
-                    setShowStickerPicker(false);
-                  }}
-                  style={{
-                    padding: "6px",
-                    cursor: "pointer",
-                    borderRadius: "10px",
-                    border:
-                      selectedSticker === s.url
-                        ? "3px solid #9CC69B"
-                        : "2px solid transparent",
-                  }}
-                >
-                  <img
-                    src={s.url}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                </div>
-              ))}
+              {STICKER_LIBRARY.map((s, i) => {
+  const rotation = Math.random() * 24 - 12; 
+
+  return (
+    <div
+      key={s.url}
+      onClick={() => {
+        setSelectedSticker(s.url);
+        setShowStickerPicker(false);
+      }}
+      style={{
+        cursor: "pointer",
+        transform: `rotate(${rotation}deg)`,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "rotate(0deg) scale(1.1)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = `rotate(${rotation}deg)`;
+      }}
+    >
+      <img
+        src={s.url}
+        style={{
+          width: "70px",
+          height: "70px",
+          objectFit: "contain",
+          pointerEvents: "none",
+          display: "block",
+        }}
+      />
+    </div>
+  );
+})}
+
             </div>
           </div>
         </div>
