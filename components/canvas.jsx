@@ -468,10 +468,10 @@ export default function Canvas() {
 >
   <button
     style={{
-      ...baseButtonStyle,       // ← keep this
-      background: "#f7fdf7",    // ← override background
-      fontSize: "10px",         // ← override font size
-      padding: "6px 10px",      // ← optional smaller padding
+      ...baseButtonStyle,       
+      background: "#f7fdf7",    
+      fontSize: "10px",         
+      padding: "6px 10px",      
     }}
     onClick={() => handleExportPDF("letter")}
   >
