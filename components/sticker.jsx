@@ -12,7 +12,7 @@ export default function Sticker({ sticker, onDragEnd, onScaleChange }) {
 
   const nodeRef = useRef(null);
 
-  // 🧠 Keep state in sync when refreshed
+  // Keep state in sync when refreshed
   useEffect(() => {
     setScale(Number(sticker.scale) || 1);
     setLocked(!!sticker.locked);
@@ -34,7 +34,7 @@ export default function Sticker({ sticker, onDragEnd, onScaleChange }) {
     }
   }, [sticker.id]);
 
-  // ✅ Working scale change logic
+  //  Working scale change logic
   const handleScale = useCallback(
     (newScale) => {
       const clamped = Math.max(0.5, Math.min(newScale, 3)); // reasonable limits

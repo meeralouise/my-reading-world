@@ -7,7 +7,12 @@ const organical = localFont({
   src: "../fonts/organical-personal-use.ttf",
 });
 
-export default function Canvas() {
+export default function Canvas({
+  worldId = 1,
+  canEdit = true,
+  showHeader = true, // optional prop
+  topBanner = null,
+}) {
   const [hoverSubmit, setHoverSubmit] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [stickers, setStickers] = useState([]);
@@ -28,19 +33,27 @@ export default function Canvas() {
 
   // Form completion checker
   const formCompleted =
-    bookInfo.title &&
-    bookInfo.author &&
-    bookInfo.name &&
-    bookInfo.date;
+    bookInfo.title && bookInfo.author && bookInfo.name && bookInfo.date;
 
   useEffect(() => setIsClient(true), []);
+
+  // Reset form when world changes
+  useEffect(() => {
+    setFormSubmitted(false);
+    setBookInfo({
+      title: "",
+      author: "",
+      name: "",
+      date: "",
+    });
+  }, [worldId]);
 
   useEffect(() => {
     if (!isClient) return;
 
     const fetchStickers = async () => {
       try {
-        const res = await fetch("/api/stickers");
+        const res = await fetch(`/api/stickers?world_id=${worldId}`);
         const data = await res.json();
         if (Array.isArray(data)) setStickers(data);
       } catch (err) {
@@ -49,13 +62,15 @@ export default function Canvas() {
     };
 
     fetchStickers();
-  }, [isClient]);
+  }, [isClient, worldId]);
 
   if (!isClient) return null;
 
   /* ---------------------- Dragging + Saving ----------------------- */
 
   const handleDragEnd = async (id, x, y) => {
+    if (!canEdit) return; // view-only: no drag
+
     setStickers((prev) =>
       prev.map((s) =>
         s.id === id ? { ...s, x_position: x, y_position: y } : s
@@ -68,10 +83,14 @@ export default function Canvas() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ x_position: x, y_position: y }),
       });
-    } catch (err) {}
+    } catch (err) {
+      console.error("Failed to save drag:", err);
+    }
   };
 
   const handleScaleChange = async (id, scale) => {
+    if (!canEdit) return; // view-only: no scale
+
     setStickers((prev) =>
       prev.map((s) => (s.id === id ? { ...s, scale } : s))
     );
@@ -82,23 +101,33 @@ export default function Canvas() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scale }),
       });
-    } catch (err) {}
+    } catch (err) {
+      console.error("Failed to save scale:", err);
+    }
   };
 
   /* ---------------------- Submitting a Book ----------------------- */
+
   const handleBookSubmit = async (e) => {
     e.preventDefault();
-  
+
+    if (!canEdit) {
+      alert("This world is read-only until the access code is entered.");
+      return;
+    }
+
     if (!formCompleted) {
       alert("Please complete the entire form before submitting.");
       return;
     }
-  
+
     if (!selectedSticker) {
       alert("Please choose a sticker before submitting.");
       return;
     }
+
     const newSticker = {
+      world_id: worldId,
       x_position: Math.floor(Math.random() * 800 + 100),
       y_position: Math.floor(Math.random() * 800 + 100),
       image_url: selectedSticker,
@@ -121,85 +150,82 @@ export default function Canvas() {
       setStickers((prev) => [...prev, saved]);
       setFormSubmitted(true);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to save sticker:", err);
     }
   };
+
   /* ---------------------- Export PDF ----------------------- */
 
-  const handleExportPDF = async (size = "tabloid") => {
-    const html2canvas = (await import("html2canvas")).default;
-    const { jsPDF } = await import("jspdf");
-  
-    const element = document.getElementById("art-canvas");
-    if (!element) return;
-  
-    const bgColor = window.getComputedStyle(element).backgroundColor;
-  
-    const canvas = await html2canvas(element, {
-      scale: 4,
-      backgroundColor: bgColor,
-    });
-  
-    const img = canvas.toDataURL("image/png");
-  
-    let format, filename;
-  
-    if (size === "letter") {
-      format = [792, 612];
-      filename = "my-reading-world-letter.pdf";
-    } else {
-      format = [1224, 792];
-      filename = "my-reading-world-tabloid.pdf";
-    }
-  
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "pt",
-      format,
-    });
-  
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-  
-   
-    pdf.setFont("Helvetica", "bold");
-    pdf.setFontSize(14);
-  
-    pdf.text("Our Reading World!", 40, pageHeight - 30);
-  
-  
-    const margin = 20; 
-    const maxWidth = pageWidth - margin * 2;
-    const maxHeight = pageHeight - 60;
-  
-    const origWidth = canvas.width;
-    const origHeight = canvas.height;
-  
+const handleExportPDF = async (size = "tabloid") => {
+  const html2canvas = (await import("html2canvas")).default;
+  const { jsPDF } = await import("jspdf");
 
-    let displayWidth = (origWidth * maxHeight) / origHeight;
-    let displayHeight = maxHeight;
-  
-    if (displayWidth > maxWidth) {
-      displayWidth = maxWidth;
-      displayHeight = (origHeight * maxWidth) / origWidth;
-    }
-  
+  const element = document.getElementById("art-canvas");
+  if (!element) return;
 
-    const x = (pageWidth - displayWidth) / 2;
-    const y = (pageHeight - displayHeight) / 2 - 10;
-  
- 
-    pdf.setDrawColor(200);
-    pdf.setLineWidth(1);
-    pdf.rect(x - 5, y - 5, displayWidth + 10, displayHeight + 10);
-  
-    pdf.addImage(img, "PNG", x, y, displayWidth, displayHeight);
-  
-    pdf.save(filename);
-  };
-  
+  const bgColor = window.getComputedStyle(element).backgroundColor;
+
+  const canvas = await html2canvas(element, {
+    scale: 4,
+    backgroundColor: bgColor,
+  });
+
+  const img = canvas.toDataURL("image/png");
+
+  let format, filename;
+
+  if (size === "letter") {
+    // 11 x 8.5 in (landscape) in points
+    format = [792, 612];
+    filename = "my-reading-world-letter.pdf";
+  } else {
+    // 17 x 11 in (landscape) in points
+    format = [1224, 792];
+    filename = "my-reading-world-tabloid.pdf";
+  }
+
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "pt",
+    format,
+  });
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  // Optional footer text
+  pdf.setFont("Helvetica", "bold");
+  pdf.setFontSize(14);
+  pdf.text("Our Reading World!", 40, pageHeight - 30);
+
+  // ----- SCALE IMAGE TO MAX WIDTH, KEEP RATIO -----
+  const origWidth = canvas.width;
+  const origHeight = canvas.height;
+
+  // Use full page width for the canvas image
+  let displayWidth = pageWidth;
+  let displayHeight = (origHeight / origWidth) * displayWidth;
+
+  // Safety: if somehow taller than the page, fall back to height-based scaling
+  if (displayHeight > pageHeight) {
+    displayHeight = pageHeight;
+    displayWidth = (origWidth / origHeight) * displayHeight;
+  }
+
+  // Small top margin, no huge gap
+  const topMargin = 20; // ~0.28"
+  const x = (pageWidth - displayWidth) / 2; // usually 0 when full width
+  const y = topMargin;
+
+  // Draw image (no border box so it can sit right near the top)
+  pdf.addImage(img, "PNG", x, y, displayWidth, displayHeight);
+
+  pdf.save(filename);
+};
+
 
   /* ---------------------- Base Button Style ------------------------ */
+
   const baseButtonStyle = {
     padding: "10px 20px",
     borderRadius: "12px",
@@ -211,100 +237,233 @@ export default function Canvas() {
   };
 
   /* -------------------------- RETURN --------------------------- */
+
   return (
     <div style={{ textAlign: "center" }}>
-      {/* Header */}
+      {/* optional banner from the page (for non-shared worlds) */}
+      {topBanner}
+
+      {/* Compact Header + Form + Buttons */}
       <div
         style={{
+          margin: "0 auto 20px",
+          maxWidth: "980px",
+          padding: "12px 20px",
           display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-start",
           justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "30px",
-          padding: "0 40px",
+          gap: "18px",
+          borderRadius: "18px",
+          background: "#f7fdf7",
+          border: "1px dashed #9CC69B",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
         }}
       >
-        <h1
-          className={organical.className}
-          style={{
-            display: "inline-block",
-            padding: "12px 40px",
-            fontSize: "50px",
-            borderRadius: "999px",
-            border: "3px dashed #f7fff7",
-            backgroundImage: "url('/stickers/background2.jpg')",
-            color: "#421C0B",
-            WebkitTextStroke: ".25px white",
-          }}
-        >
-          Our Reading World!
-        </h1>
+        {/* Left side: Title + Instructions */}
+        {showHeader && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              alignItems: "flex-start",
+              flexShrink: 0,
+            }}
+          >
+            <h1
+              className={organical.className}
+              style={{
+                display: "inline-block",
+                padding: "10px 30px",
+                fontSize: "34px",
+                borderRadius: "999px",
+                border: "3px dashed #f7fff7",
+                backgroundImage: "url('/stickers/background2.jpg')",
+                color: "#421C0B",
+                WebkitTextStroke: ".25px white",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Our Reading World!
+            </h1>
 
+            <div
+              style={{
+                fontSize: "12px",
+                maxWidth: "230px",
+                lineHeight: "1.4",
+                textAlign: "left",
+                padding: "0.75rem",
+                borderRadius: "12px",
+                background: "#f9f9f9",
+                border: "1px dashed #ddd",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.06)",
+                fontFamily: "sans-serif",
+              }}
+            >
+              <strong>How it works:</strong>
+              <br />
+              Log a book → choose a sticker → place it anywhere!
+            </div>
+          </div>
+        )}
+
+        {/* Right side: form + buttons */}
         <div
           style={{
-            fontSize: "14px",
-            maxWidth: "260px",
-            lineHeight: "1.4",
-            textAlign: "right",
-            padding: "1rem",
-            borderRadius: "12px",
-            background: "#f9f9f9",
-            border: "1px dashed #ddd",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-            fontFamily: "sans-serif",
+            flex: 1,
+            minWidth: "260px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            alignItems: "stretch",
           }}
         >
-          <strong>How it works:</strong>
-          <br />
-          Log a book → choose a sticker → place it anywhere!
+          {/* Book Form (only if canEdit) */}
+          {canEdit && !formSubmitted && (
+            <form style={{ margin: 0 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: "6px",
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Book Title"
+                  value={bookInfo.title}
+                  onChange={(e) =>
+                    setBookInfo({ ...bookInfo, title: e.target.value })
+                  }
+                  required
+                />
+
+                <input
+                  type="text"
+                  placeholder="Author"
+                  value={bookInfo.author}
+                  onChange={(e) =>
+                    setBookInfo({ ...bookInfo, author: e.target.value })
+                  }
+                  required
+                />
+
+                <input
+                  type="text"
+                  placeholder="Your Name"
+                  value={bookInfo.name}
+                  onChange={(e) =>
+                    setBookInfo({ ...bookInfo, name: e.target.value })
+                  }
+                  required
+                />
+
+                <input
+                  type="date"
+                  value={bookInfo.date}
+                  onChange={(e) =>
+                    setBookInfo({ ...bookInfo, date: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </form>
+          )}
+
+          {/* Sticker Picker Button + Submit */}
+          {canEdit && !formSubmitted && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+                gap: "8px",
+                marginTop: "6px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setShowStickerPicker(true)}
+                style={{
+                  ...baseButtonStyle,
+                  background: "#f7fff7",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  fontSize: "12px",
+                  padding: "8px 12px",
+                }}
+              >
+                {selectedSticker ? (
+                  <>
+                    <img
+                      src={selectedSticker}
+                      style={{ width: "28px", height: "28px" }}
+                    />
+                    Select Sticker
+                  </>
+                ) : (
+                  "Choose Sticker"
+                )}
+              </button>
+
+              <button
+                onClick={handleBookSubmit}
+                onMouseEnter={() => setHoverSubmit(true)}
+                onMouseLeave={() => setHoverSubmit(false)}
+                style={{
+                  ...baseButtonStyle,
+                  background: hoverSubmit ? "#e3f8e3" : "#f7fff7",
+                  fontSize: "12px",
+                  padding: "8px 12px",
+                }}
+              >
+                Submit & Earn Sticker
+              </button>
+            </div>
+          )}
+
+          {/* Export Buttons */}
+          <div
+            style={{
+              marginTop: "6px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "6px",
+              justifyContent: "flex-end",
+            }}
+          >
+            <button
+              style={{
+                ...baseButtonStyle,
+                background: "#f7fdf7",
+                fontSize: "10px",
+                padding: "6px 10px",
+              }}
+              onClick={() => handleExportPDF("letter")}
+            >
+              Export Letter
+            </button>
+
+            <button
+              style={{
+                ...baseButtonStyle,
+                background: "#f7fdf7",
+                fontSize: "10px",
+                padding: "6px 10px",
+              }}
+              onClick={() => handleExportPDF("tabloid")}
+            >
+              Export Tabloid
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Book Form */}
-      {!formSubmitted && (
-        <form style={{ marginBottom: "10px" }}>
-          <input
-            type="text"
-            placeholder="Book Title"
-            value={bookInfo.title}
-            onChange={(e) =>
-              setBookInfo({ ...bookInfo, title: e.target.value })
-            }
-            required
-          />
-
-          <input
-            type="text"
-            placeholder="Author"
-            value={bookInfo.author}
-            onChange={(e) =>
-              setBookInfo({ ...bookInfo, author: e.target.value })
-            }
-            required
-          />
-
-          <input
-            type="text"
-            placeholder="Your Name"
-            value={bookInfo.name}
-            onChange={(e) =>
-              setBookInfo({ ...bookInfo, name: e.target.value })
-            }
-            required
-          />
-
-          <input
-            type="date"
-            value={bookInfo.date}
-            onChange={(e) =>
-              setBookInfo({ ...bookInfo, date: e.target.value })
-            }
-            required
-          />
-        </form>
-      )}
-
-      {/* Sticker Picker Modal */}
-      {showStickerPicker && (
+      {/* Sticker Picker Modal (edit-only) */}
+      {canEdit && showStickerPicker && (
         <div
           onClick={() => setShowStickerPicker(false)}
           style={{
@@ -350,7 +509,7 @@ export default function Canvas() {
                 marginTop: "12px",
               }}
             >
-              {STICKER_LIBRARY.map((s, i) => {
+              {STICKER_LIBRARY.map((s) => {
                 const rotation = Math.random() * 24 - 12;
 
                 return (
@@ -395,101 +554,6 @@ export default function Canvas() {
         </div>
       )}
 
-      {/* Sticker Picker Button + Submit */}
-      {!formSubmitted && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "15px",
-            marginBottom: "40px",
-            marginTop: "20px",
-          }}
-        >
-          {/* OPEN STICKER PICKER BUTTON */}
-          <button
-            type="button"
-            onClick={() => {
-              setShowStickerPicker(true);
-            }}
-            style={{
-              ...baseButtonStyle,
-              background: "#f7fff7",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontSize: "12px",
-              padding: "8px 12px",
-            }}
-          >
-            {selectedSticker ? (
-              <>
-                <img
-                  src={selectedSticker}
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    objectFit: "contain",
-                  }}
-                />
-                Select Sticker
-              </>
-            ) : (
-              "Choose Sticker"
-            )}
-          </button>
-
-          {/* SUBMIT BUTTON */}
-          <button
-            onClick={handleBookSubmit}
-            onMouseEnter={() => setHoverSubmit(true)}
-            onMouseLeave={() => setHoverSubmit(false)}
-            style={{
-              ...baseButtonStyle,
-              background: hoverSubmit ? "#e3f8e3" : "#f7fff7",
-              fontSize: "12px",
-              padding: "8px 12px",
-            }}
-          >
-            Submit & Earn Sticker
-          </button>
-        </div>
-      )}
- {/* Export Buttons */}
- <div
-  style={{
-    marginBottom: "20px",
-    display: "flex",
-    gap: "5px",
-    justifyContent: "left",
-    padding: "0px 10px",
-  }}
->
-  <button
-    style={{
-      ...baseButtonStyle,       
-      background: "#f7fdf7",    
-      fontSize: "10px",         
-      padding: "6px 10px",      
-    }}
-    onClick={() => handleExportPDF("letter")}
-  >
-    Export Letter
-  </button>
-
-  <button
-    style={{
-      ...baseButtonStyle,
-      background: "#f7fdf7",
-      fontSize: "10px",
-      padding: "6px 10px",
-    }}
-    onClick={() => handleExportPDF("tabloid")}
-  >
-    Export Tabloid
-  </button>
-</div>
       {/* Canvas */}
       <div
         id="art-canvas"
@@ -498,7 +562,8 @@ export default function Canvas() {
           height: "2000px",
           border: "1px solid #ccc",
           position: "relative",
-          overflow: "hidden",
+          overflowY: "hidden",
+          overflowX: "scroll",
           background: "#f7fdf7",
         }}
       >
