@@ -1,5 +1,10 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import localFont from "next/font/local";
+
+const organical = localFont({
+  src: "../../fonts/organical-personal-use.ttf",
+});
 
 export default function WorldsHome() {
   const router = useRouter();
@@ -116,8 +121,22 @@ export default function WorldsHome() {
   };
 
   return (
-    <div style={{ padding: "40px", fontFamily: "sans-serif" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "10px" }}>
+    <div style={{ padding: "30px", fontFamily: "sans-serif",
+    border: "20px dashed #F0D667",
+      margin: "10px",
+      borderRadius: "5px",
+      padding: "10px",
+      minHeight: "calc(100vh - 40px)", 
+      boxSizing: "border-box",
+      backgroundImage: "url('/stickers/background2.jpg')",
+      }}>
+
+      <h1 
+      className={organical.className}
+      style={{ textAlign: "center", marginBottom: "10px", 
+      fontSize: "44px",
+      WebkitTextStroke: ".25px white",
+      color: "white", }}>
         Explore Book Worlds
       </h1>
       <p
@@ -125,12 +144,29 @@ export default function WorldsHome() {
           textAlign: "center",
           marginBottom: "30px",
           fontSize: "14px",
-          color: "#555",
+          color: "white",
+          fontFamily: "monospace",
+          background:"#D7648C",
         }}
       >
         Click a world to visit it. Private worlds are view-only unless you have
-        the access code to edit.
+        the access code to edit. 
       </p>
+
+      <p
+       style={{
+        textAlign: "center",
+        margin: "10px",
+        fontSize: "15px",
+        background:"#D7648C",
+        fontWeight: "bold",
+        color: "white",
+        fontFamily: "monospace",
+      }}
+    >
+      Be sure to screenshot your code so you don't forget it!
+      </p>
+
 
       {/* Top controls: create + join */}
       <div

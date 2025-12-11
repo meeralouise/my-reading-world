@@ -239,7 +239,9 @@ const handleExportPDF = async (size = "tabloid") => {
   /* -------------------------- RETURN --------------------------- */
 
   return (
-    <div style={{ textAlign: "center" }}>
+    <div style={{ textAlign: "center",
+    
+ }}>
       {/* optional banner from the page (for non-shared worlds) */}
       {topBanner}
 
@@ -276,12 +278,13 @@ const handleExportPDF = async (size = "tabloid") => {
               style={{
                 display: "inline-block",
                 padding: "10px 30px",
-                fontSize: "34px",
+                fontSize: "44px",
+                letterSpacing:"1px",
                 borderRadius: "999px",
-                border: "3px dashed #f7fff7",
+                border: "3px dashed #D7648C",
                 backgroundImage: "url('/stickers/background2.jpg')",
                 color: "#421C0B",
-                WebkitTextStroke: ".25px white",
+                WebkitTextStroke: ".4px white",
                 whiteSpace: "nowrap",
               }}
             >
@@ -459,6 +462,30 @@ const handleExportPDF = async (size = "tabloid") => {
               Export Tabloid
             </button>
           </div>
+             {/* Tiny navigation row with Explore Worlds */}
+      <div
+        style={{
+          marginBottom: "20px",
+          display: "flex",
+          justifyContent: "center",
+          gap: "10px",
+        }}
+      >
+        <a
+          href="/worlds"
+          style={{
+            padding: "8px 16px",
+            border: "2px dashed #9CC69B",
+            borderRadius: "12px",
+            background: "#f7fff7",
+            textDecoration: "none",
+            color: "#333",
+            fontSize: "14px",
+          }}
+        >
+          Explore Worlds
+        </a>
+      </div>
         </div>
       </div>
 
