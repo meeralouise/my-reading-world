@@ -289,6 +289,8 @@ export default function WorldsHome() {
             fontSize: "18px",
             marginBottom: "12px",
             textAlign: "left",
+            color: "#D7648C",
+            background: "#F0D667",
           }}
         >
           All Worlds
